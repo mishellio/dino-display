@@ -26,11 +26,9 @@ void setup() {
   digitalWrite(RESET_PIN, HIGH);
   Serial.begin(9600);
 
-  // binary_dino = sprite_to_binary_return(DINO);
-  // sanity_check(binary_dino);
-  sprite_to_binary(DINO);
-  // sprite_to_binary(cursed2, binary2);
-  // sprite_to_binary(cursed3, binary3);
+  img_to_binary(DINO);
+  // img_to_binary(cursed2, binary2);
+  // img_to_binary(cursed3, binary3);
   
   board1.begin();
   board2.begin();
@@ -84,34 +82,13 @@ void binary_to_led(TLC59116 board) {
 //   }
 // }
 
-void sprite_to_binary(const int sprite[][COLUMN]) {
-  // unsigned int binary = 0;
-  // unsigned int binary_array[COLUMN];
+void img_to_binary(const int img[][COLUMN]) {
   for(int col = 0; col < COLUMN; col++) {
     for(int row = 0; row < ROW; row++) {
-      binary[col] |= sprite[row][col] << row;
+      binary[col] |= img[row][col] << row;
     }
-    // Serial.println(binary);
-    // binary_array[col] = binary;
-    // binary = 0;
   }
-  // return binary_array;
 }
-
-// int* sprite_to_binary_return(int sprite[][COLUMN]) {
-//   unsigned int binary_array[COLUMN];
-//   for(int col = 0; col < COLUMN; col++) {
-//     unsigned int binary = 0;
-//     for(int row = 0; row < ROW; row++) {
-//       binary |= sprite[row][col] << row;
-//     }
-//     Serial.print("stb: ");
-//     Serial.println(binary);
-//     binary_array[col] = binary;
-//     // binary = 0;
-//   }
-//   return binary_array;
-// }
 
 void sanity_check(int array[]) {
   for (int i = 0; i < COLUMN; i++) {
