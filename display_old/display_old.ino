@@ -67,6 +67,7 @@ const int DINO[ROW][COLUMN] = {
   bool detected = false;
   long prev_time = 0;
   long curr_time = 0;
+  long avg_rtt = 0;
 
 void setup() {
     Serial.begin(9600);
@@ -75,7 +76,7 @@ void setup() {
     }
     pinMode(7,OUTPUT);
     pinMode(6,OUTPUT);
-    digitalWrite(6,HIGH);
+    digitalWrite(7,HIGH);
     pinMode(13,OUTPUT);
     Serial.println("setup().arduino done");
 
@@ -95,27 +96,51 @@ void setup() {
 }
 
 void loop() {
+  array_to_leds(DINO);
 
-  // array_to_leds(DINO);
-
-  test_sensor();
+  //test_sensor();
   // update_led();
 
   }
 
 void update_led() {
   VL53L0X_RangingMeasurementData_t measure;
+  
   lox.rangingTest(&measure, false); // pass in 'true' to get debug data printout! this is where measure gets set
-  if (arm_detected(measure) && !detected) {
-    prev_time = curr_time; // set previous time with previous current
-    curr_time = micros(); // new current
-    long total_time = curr_time - prev_time;
+  // Serial.println(measure.RangeMilliMeter);
+  // if (arm_detected(measure) && !detected) {
+  //   prev_time = curr_time; // set previous time with previous current
+  //   curr_time = micros(); // new current
+  //   long total_time = curr_time - prev_time;
+  //   Serial.println(total_time);
+  //   // Serial.println(measure.RangeMilliMeter);
 
-    detected = true;
-    array_to_leds_delay(DINO, total_time);
-  }
-  else if (measure.RangeStatus != 4 && detected) {
+  //   detected = true;
+  //   array_to_leds_delay(DINO, total_time);
+  // }
+  // else if (!arm_detected(measure) && detected) {
+  //   detected = false;
+  // }
+  if (measure.RangeMilliMeter > 2000) {
     detected = false;
+  } else if (!detected) {
+    detected = true;
+    array_to_leds_delay(DINO, 1);
+    // prev_time = curr_time; // set previous time with previous current
+    // curr_time = micros(); // new current
+    // long total_time = curr_time - prev_time;
+    // // if (avg_rtt == 0) {
+    //   // avg_rtt = total_time;
+    // // } else {
+    //   // avg_rtt = 0.99*avg_rtt + 0.01*total_time;
+    // // }
+    // avg_rtt = 100000;
+    // array_to_leds_delay(DINO, avg_rtt);
+    // Serial.print("measure.RangeMilliMeter: ");
+    // Serial.print(measure.RangeMilliMeter);
+    // Serial.print(", ");
+    // Serial.print("total_time: ");
+    // Serial.println(total_time);
   }
 }
 
@@ -129,7 +154,7 @@ void test_sensor() {
 }
 
 bool arm_detected(VL53L0X_RangingMeasurementData_t measure) {
-  return (measure.RangeMilliMeter >= 90 && measure.RangeMilliMeter <= 140); // 110 to 130 based on testing --> was a bit inaccurate so maybe 90 - 140?
+  return (measure.RangeMilliMeter >= 110 && measure.RangeMilliMeter <= 140); // 110 to 130 based on testing --> was a bit inaccurate so maybe 90 - 140?
   // or maybe i just do either number or out of range, depends on if there's anything else that can interfere
 }
 
@@ -155,7 +180,7 @@ void array_to_leds(int array[][COLUMN]) {
     // delay(100);
   }
   tlcmanager.broadcast().off_pattern(0xFFFF);
-  // delay(5);
+  delay(5);
   // long total_time = micros() - start_time;
   // Serial.println(total_time);
 }
