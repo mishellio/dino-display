@@ -45,7 +45,7 @@
 #include "Adafruit_VL53L0X.h"
 Adafruit_VL53L0X lox = Adafruit_VL53L0X();
 
-#include "TLC59116.h"
+#include "TLC59116_old.h"
 TLC59116Manager tlcmanager(Wire, 100000); // see the I2C_Speed.xls spread sheet for workable speeds
 
 #include "BlinkTracking.h"
