@@ -95,29 +95,8 @@ void setup() {
 }
 
 void loop() {
-  static TLC59116 &t = tlcmanager[0];
-  // VL53L0X_RangingMeasurementData_t measure;
-  // bool full_rotation = true;
 
-  // // do_blinks(t);
-  // // do_triangles(t);
-  // lox.rangingTest(&measure, false); // pass in 'true' to get debug data printout!
-
-  // if (measure.RangeStatus != 4) {  // phase failures have incorrect data
-  //   Serial.print("Distance (mm): "); Serial.println(measure.RangeMilliMeter);
-  // } else {
-  //   Serial.println(" out of range ");
-  // }
-
-  // // ig see what the range is for the sensor
-  // if (arm_distance(measure)) {
-  //   full_rotation = !full_rotation; // need to actually check this properly
-  //   // or consider just doing half for now
-  // }
-
-  // if (full_rotation) {
-  //   array_to_leds(DINO);
-  // }
+  // array_to_leds(DINO);
 
   test_sensor();
   // update_led();
@@ -127,7 +106,7 @@ void loop() {
 void update_led() {
   VL53L0X_RangingMeasurementData_t measure;
   lox.rangingTest(&measure, false); // pass in 'true' to get debug data printout! this is where measure gets set
-  if (arm_distance(measure) && !detected) {
+  if (arm_detected(measure) && !detected) {
     prev_time = curr_time; // set previous time with previous current
     curr_time = micros(); // new current
     long total_time = curr_time - prev_time;
@@ -143,19 +122,19 @@ void update_led() {
 void test_sensor() {
   VL53L0X_RangingMeasurementData_t measure;
   lox.rangingTest(&measure, false); // pass in 'true' to get debug data printout! this is where measure gets set
-  if (arm_distance(measure)) {
+  if (arm_detected(measure)) {
     Serial.println("you won");
   }
   Serial.println("nvm");
 }
 
-bool arm_distance(VL53L0X_RangingMeasurementData_t measure) {
+bool arm_detected(VL53L0X_RangingMeasurementData_t measure) {
   return (measure.RangeMilliMeter >= 90 && measure.RangeMilliMeter <= 140); // 110 to 130 based on testing --> was a bit inaccurate so maybe 90 - 140?
   // or maybe i just do either number or out of range, depends on if there's anything else that can interfere
 }
 
 void array_to_leds_delay(int array[][COLUMN], long total_time) {
-  long delay =  ((1/4)/ROW)*total_time; // (1/4th of display/image width)*rotation time
+  long delay =  ((1/4)/ROW)*total_time; // (1/4th of display/image width)*rotation time = delay for 1 col of led
   unsigned int binary = 0;
   for(int i = 0; i < COLUMN; i++) {
     binary = col_to_bin(array, i);
