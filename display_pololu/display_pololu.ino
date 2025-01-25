@@ -107,104 +107,19 @@ void setup() {
 }
 
 void loop() {
-  static TLC59116 &t = tlcmanager[0];
-  // VL53L0X_RangingMeasurementData_t measure;
-  // bool full_rotation = true;
-
-  // // do_blinks(t);
-  // // do_triangles(t);
-  // lox.rangingTest(&measure, false); // pass in 'true' to get debug data printout!
-
-  // if (measure.RangeStatus != 4) {  // phase failures have incorrect data
-  //   Serial.print("Distance (mm): "); Serial.println(measure.RangeMilliMeter);
-  // } else {
-  //   Serial.println(" out of range ");
-  // }
-
-  // // ig see what the range is for the sensor
-  // if (arm_distance(measure)) {
-  //   full_rotation = !full_rotation; // need to actually check this properly
-  //   // or consider just doing half for now
-  // }
-
-  // if (full_rotation) {
-  //   array_to_leds(DINO);
-  // }
-
   // array_to_leds(DINO);
-
-  //test_sensor();
   update_led();
-
   }
 
 void update_led() {
-
-  // VL53L0X_RangingMeasurementData_t measure;
-  
-  // lox.rangingTest(&measure, false); // pass in 'true' to get debug data printout! this is where measure gets set
-  // Serial.println(measure.RangeMilliMeter);
-  // if (arm_distance(measure) && !detected) {
-  //   prev_time = curr_time; // set previous time with previous current
-  //   curr_time = micros(); // new current
-  //   long total_time = curr_time - prev_time;
-  //   Serial.println(total_time);
-  //   // Serial.println(measure.RangeMilliMeter);
-
-  //   detected = true;
-  //   array_to_leds_delay(DINO, total_time);
-  // }
-  // else if (!arm_distance(measure) && detected) {
-  //   detected = false;
-  // }
-  // if (measure.RangeMilliMeter > 2000) {
-  //   detected = false;
-  // } else if (!detected) {
-  //   detected = true;
-    // if (sensor.readRangeContinuousMillimeters() < 2000) {
-    //   array_to_leds_delay(DINO, 1);
-    // }
-    
     if (sensor.readRangeContinuousMillimeters() > 2000) {
       detected = false;
-      
     }
     else if (!detected) {
-      // Serial.print("half rotate: ");
-      // Serial.println(micros() - start_time);
       detected = true;
       array_to_leds(DINO);
-      // start_time = micros();
-      // array_to_leds_delay(DINO, 1);
     }
-    //  if (sensor.readRangeContinuousMillimeters() < 2000) {
-    //   Serial.print("half rotate: ");
-    //   Serial.println(micros() - start_time);
-    //   detected = true;
-    //   array_to_leds(DINO);
-    //   start_time = micros();
-    //   // array_to_leds_delay(DINO, 1);
-    // }
     if (sensor.timeoutOccurred()) { Serial.print(" TIMEOUT"); }
-                  // Serial.println(sensor.readRangeContinuousMillimeters());
-
-
-    // prev_time = curr_time; // set previous time with previous current
-    // curr_time = micros(); // new current
-    // long total_time = curr_time - prev_time;
-    // // if (avg_rtt == 0) {
-    //   // avg_rtt = total_time;
-    // // } else {
-    //   // avg_rtt = 0.99*avg_rtt + 0.01*total_time;
-    // // }
-    // avg_rtt = 100000;
-    // array_to_leds_delay(DINO, avg_rtt);
-    // Serial.print("measure.RangeMilliMeter: ");
-    // Serial.print(measure.RangeMilliMeter);
-    // Serial.print(", ");
-    // Serial.print("total_time: ");
-    // Serial.println(total_time);
-  // }
 }
 
 void profile_sensor_without_detect() {
@@ -217,15 +132,6 @@ void profile_sensor_without_detect() {
       // array_to_leds_delay(DINO, 1);
     }
 }
-
-// void test_sensor() {
-//   VL53L0X_RangingMeasurementData_t measure;
-//   lox.rangingTest(&measure, false); // pass in 'true' to get debug data printout! this is where measure gets set
-//   if (arm_distance(measure)) {
-//     Serial.println("you won");
-//   }
-//   Serial.println("nvm");
-// }
 
 // bool arm_distance(VL53L0X_RangingMeasurementData_t measure) {
 //   return (measure.RangeMilliMeter >= 110 && measure.RangeMilliMeter <= 140); // 110 to 130 based on testing --> was a bit inaccurate so maybe 90 - 140?
