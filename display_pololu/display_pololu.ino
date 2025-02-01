@@ -50,8 +50,6 @@ VL53L0X sensor;
 #include "TLC59116_old.h"
 TLC59116Manager tlcmanager(Wire, 100000); // see the I2C_Speed.xls spread sheet for workable speeds
 
-#include "BlinkTracking.h"
-
 const int COLUMN = 8; // num columns in 2D array
 const int ROW = 8;
 
@@ -67,10 +65,11 @@ const int DINO[ROW][COLUMN] = {
 };
 
   bool detected = false;
-  long prev_time = 0;
-  long curr_time = 0;
-  long avg_rtt = 0;
+  // long prev_time = 0;
+  // long curr_time = 0;
+  // long avg_rtt = 0;
   long start_time = 0;
+  long s = 0;
 
 void setup() {
     Serial.begin(9600);
@@ -101,53 +100,108 @@ void setup() {
     // tlcmanager[0].set_milliamps(0, 150);
     Serial.println("setup().tlc done");
 
-    BlinkTracking::init_tracking();
-
     Serial.println("setup() done");
 }
 
 void loop() {
+  long period = get_half_period();
+  Serial.print("final: ");
+  Serial.println(period);
+  for (int i = 0; i < 100; i++) {
+      // s = micros();
+      // array_to_leds(DINO);
+      // long e = micros()-s;
+      // Serial.print("DINO: ");
+      // Serial.println(e);
+      // delay(period);
+      array_to_leds(DINO);
+      delay(period - 13);
+  }
+  
+  // array_to_leds_delay(DINO, period);
   // array_to_leds(DINO);
-  update_led();
+  // update_led();
   }
 
-void update_led() {
-    if (sensor.readRangeContinuousMillimeters() > 2000) {
-      detected = false;
-    }
-    else if (!detected) {
-      detected = true;
-      array_to_leds(DINO);
-    }
-    if (sensor.timeoutOccurred()) { Serial.print(" TIMEOUT"); }
+long get_half_period() {
+  long period = 0;
+  int num_rotation = 0;
+  while (num_rotation < 50) {
+      if (sensor.readRangeContinuousMillimeters() > 2000) {
+        detected = false;
+      }
+      else if (!detected) {
+        long end_time = millis()-start_time;
+        Serial.println(end_time);
+        if (end_time < 170) {
+          period += end_time;
+          num_rotation += 1;
+        }
+        detected = true;
+        start_time = millis();
+      }
+      if (sensor.timeoutOccurred()) { Serial.print(" GET FREQUENCY TIMEOUT"); }
+  }
+  return period/num_rotation;
 }
 
-void profile_sensor_without_detect() {
-   if (sensor.readRangeContinuousMillimeters() < 2000) {
-      Serial.print("half rotate: ");
-      Serial.println(micros() - start_time);
-      detected = true;
-      array_to_leds(DINO);
-      start_time = micros();
-      // array_to_leds_delay(DINO, 1);
-    }
+long get_half_period_no_detect() {
+  long period = 0;
+  int num_rotation = 0;
+  while (num_rotation < 50) {
+      if (sensor.readRangeContinuousMillimeters() < 2000) {
+        long end_time = millis()-start_time;
+        Serial.println(end_time);
+        // if (end_time < 170000) {
+          period += millis()-start_time;
+          num_rotation += 1;
+        // }
+        detected = true;
+        start_time = millis();
+      }
+      if (sensor.timeoutOccurred()) { Serial.print(" GET FREQUENCY TIMEOUT"); }
+  }
+  return period/num_rotation;
 }
+
+void update_led() {
+  if (sensor.readRangeContinuousMillimeters() > 2000) {
+    detected = false;
+  }
+  else if (!detected) {
+    detected = true;
+    array_to_leds(DINO);
+  }
+  if (sensor.timeoutOccurred()) { Serial.print(" TIMEOUT"); }
+}
+
+// void profile_sensor_without_detect() {
+//   if (sensor.readRangeContinuousMillimeters() < 2000) {
+//     Serial.print("half rotate: ");
+//     Serial.println(micros() - start_time);
+//     detected = true;
+//     array_to_leds(DINO);
+//     start_time = micros();
+//     // array_to_leds_delay(DINO, 1);
+//   }
+// }
 
 // bool arm_distance(VL53L0X_RangingMeasurementData_t measure) {
 //   return (measure.RangeMilliMeter >= 110 && measure.RangeMilliMeter <= 140); // 110 to 130 based on testing --> was a bit inaccurate so maybe 90 - 140?
 //   // or maybe i just do either number or out of range, depends on if there's anything else that can interfere
 // }
 
-void array_to_leds_delay(int array[][COLUMN], long total_time) {
-  long delay =  ((1/4)/ROW)*total_time; // (1/4th of display/image width)*rotation time
-  unsigned int binary = 0;
-  for(int i = 0; i < COLUMN; i++) {
-    binary = col_to_bin(array, i);
+void array_to_leds_delay(int array[][COLUMN], long delay_time) {
+  for(int half_rotation = 0; half_rotation < 50; half_rotation++) {
+    unsigned int binary = 0;
+    for(int i = 0; i < COLUMN; i++) {
+      binary = col_to_bin(array, i);
+      tlcmanager.broadcast().off_pattern(0xFFFF);
+      tlcmanager.broadcast().on_pattern(binary);
+    }
     tlcmanager.broadcast().off_pattern(0xFFFF);
-    tlcmanager.broadcast().on_pattern(binary);
+    delayMicroseconds(delay_time);
   }
-  tlcmanager.broadcast().off_pattern(0xFFFF);
-  // delayMicroseconds(100000);
 }
 
 void array_to_leds(int array[][COLUMN]) {
@@ -172,76 +226,3 @@ unsigned int col_to_bin(int array[][COLUMN], int col_num) {
   }
   return binary;
 }
-
-
-// OLD CODE FROM EXAMPLE ---------------------------------------------------------------------------------------------------------
-void do_blinks(TLC59116 &t) {
-  static unsigned long blink_cycle_start = 0;
-  const static int On_Time = 3; // elapsed from beginning of cycle. empirical to keep led on very short
-  const static int Off_Time = On_Time + 150; // elapsed from beginning of cycle
-
-  unsigned long now = millis();
-  if (now - blink_cycle_start > Off_Time) {
-    digitalWrite(7,LOW); // for sink, low is on
-    digitalWrite(13,HIGH);
-    // do individual addressing to prove it works (not just broadcast)
-    blink_cycle_start = now;
-    }
-  else if (now - blink_cycle_start > On_Time) {
-    digitalWrite(7,HIGH);
-    digitalWrite(13,LOW);
-    }
-  Serial.println("Device count: ");
-  Serial.println(tlcmanager.device_count());
-
-  BlinkTracking::update(now);
-  }
-
-void do_triangles(TLC59116 &t) {
-  static long triangle_value = 1;
-  triangle(triangle_value, 0,255, 1,1, false);
-  // not doing individual addressing for triangle.
-  tlcmanager.broadcast().pwm(4,7,abs(triangle_value));
-  // For pin 6 triangle (source not sink)
-  analogWrite(6, abs(triangle_value));
-  }
-
-#define debug(msg)
-#define debugln(msg)
-
-void triangle(long &state, int min, int max, int up_inc, int down_inc, boolean once) {
-  // Set state to 1 to start running. We will set state to 0 when we want to stop!
-  // debug(min);debug('<');debug(state);debug('<');debug(max);debug(' ');
-  if (state < 0) {
-    // debug("N<");debug(min);debug(' ');
-    state += down_inc;
-    if (state >= -min) {
-      if (once) {
-        /// debug("once'd\n");debugln();
-        state = 0; // mark not running
-        return;
-        // return true; // done
-        }
-      else {
-        /// debug("~peak'd ");debugln();
-        state = min;
-        }
-      }
-    }
-  else {
-    // debug("N>");debug(min);debug(' ');
-    if (state == max) {
-      /// debug("peak'd ");debugln();
-      state = -max; // was max last time, so wrap
-      }
-    else {
-      state += up_inc;
-      if (state > max) {
-        state = max; // clip to max, and allow it for next time
-        }
-      }
-    }
-  if (state == 0) state = 1; // don't allow 0
-  // debug("=");debug(state);debugln();
-  // return false;
-  }
