@@ -115,7 +115,7 @@ void loop() {
       // Serial.println(e);
       // delay(period);
       array_to_leds(DINO);
-      delay(period - 13);
+      delay(period - 13);  //13 is profiled time dino takes to flash
   }
   
   // array_to_leds_delay(DINO, period);
@@ -123,6 +123,7 @@ void loop() {
   // update_led();
   }
 
+// sample period for 50 rotations, return average
 long get_half_period() {
   long period = 0;
   int num_rotation = 0;
