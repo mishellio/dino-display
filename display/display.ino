@@ -8,19 +8,18 @@
 
 #define RESET_PIN 7
 
-// TLC59116 board1(0b1100011); //check which address is which
-// TLC59116 board2(0b1100100);
-// TLC59116 board3(0b1100101);
-
-TLC59116 board1(0b1100000, true); //check which address is which
+TLC59116 board1(0b1100000, true);
 TLC59116 board2(0b1100001, true);
 TLC59116 board3(0b1100010, true);
+// TLC59116 board4(0b1100011, true);
+// TLC59116 board5(0b1100100, true);
+// TLC59116 board6(0b1100101, true);
 
-// TLC59116 board4(0b1100011, false); //check which address is which
-
+// dino frame constants
 const int COLUMN = 60;
 const int ROW = 16;
 
+// singular dino constants
 // const int COLUMN = 8;
 // const int ROW = 8;
 
