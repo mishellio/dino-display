@@ -146,7 +146,18 @@ void img_to_binary3(const int img[][COLUMN]) {
   // return binary_array;
 }
 
-void sanity_check(int array[]) {
+// lights up all leds
+void sanity_check_leds() {
+  // board1.setPattern(0xFFFF, 255);
+  // board2.setPattern(0xFFFF, 255);
+  // board3.setPattern(0xFFFF, 255);
+  // board4.setPattern(0xFFFF, 255);
+  // board5.setPattern(0xFFFF, 255);
+  // board6.setPattern(0xFFFF, 255);
+}
+
+// checks all elements in an array
+void sanity_check_array(int array[]) {
   for (int i = 0; i < COLUMN; i++) {
     Serial.print("sanity check: ");
     Serial.println(array[i]);
