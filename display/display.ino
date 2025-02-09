@@ -6,6 +6,9 @@
 #include <TLC59116.h>
 #include "images.h"
 
+#include <VL53L0X.h>
+VL53L0X sensor;
+
 // #define RESET_PIN D7
 #define RESET_PIN 7
 
@@ -33,6 +36,13 @@ int binary[COLUMN] = {0};
 int binary2[COLUMN] = {0};
 int binary3[COLUMN] = {0};
 
+bool detected = false;
+// long prev_time = 0;
+// long curr_time = 0;
+// long avg_rtt = 0;
+long start_time = 0;
+long s = 0;
+
 void setup() {
   Wire.begin();
   Wire.setClock(400000);
@@ -42,6 +52,16 @@ void setup() {
   delay(5);
   digitalWrite(RESET_PIN, HIGH);
   Serial.begin(9600);
+
+  sensor.setTimeout(500);
+  if (!sensor.init())
+  {
+    Serial.println("Failed to detect and initialize sensor!");
+  }
+
+  sensor.setSignalRateLimit(0.4);
+  sensor.setMeasurementTimingBudget(20000);
+  sensor.startContinuous();
 
   // img_to_binary(DINO, binary);
   img_to_binary(DINO_SCENE_1, binary);
@@ -55,9 +75,44 @@ void setup() {
 }
 
 void loop() {
-  binary_to_led_all();
+  double period = get_half_period();
+  Serial.print("final: ");
+  Serial.println(period);
+  period -= 54;//13 ms is profiled time dino takes to flash
+                // 54.5 ms is profiled time for dino frame with shadow registers
+  for (int i = 0; i < 100; i++) {
+      // long st = micros();
+      binary_to_led_all();
+      // long et = micros() - st;
+      // Serial.print("image display time: ");
+      // Serial.println(et);
+      delay(period);  
+  }
   // sanity_check_leds();
   delay(101);
+}
+
+// sample period for 50 rotations, return average
+long get_half_period() {
+  long period = 0;
+  int num_rotation = 0;
+  while (num_rotation < 50) {
+      if (sensor.readRangeContinuousMillimeters() > 2000) {
+        detected = false;
+      }
+      else if (!detected) {
+        long end_time = millis()-start_time;
+        Serial.println(end_time);
+        if (end_time < 170) {
+          period += end_time;
+          num_rotation += 1;
+        }
+        detected = true;
+        start_time = millis();
+      }
+      if (sensor.timeoutOccurred()) { Serial.print(" GET FREQUENCY TIMEOUT"); }
+  }
+  return period/num_rotation;
 }
 
 void binary_to_led(TLC59116 board) {
