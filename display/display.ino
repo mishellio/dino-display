@@ -78,13 +78,12 @@ void binary_to_led_all() {
   board3.setPattern(0, 255);
 }
 
-int* img_to_binary_return(const int img[][COLUMN], int bin[]) {
+void img_to_binary_return(const int img[][COLUMN], int bin[]) {
   for(int col = 0; col < COLUMN; col++) {
     for(int row = 0; row < ROW; row++) {
       bin[col] |= img[row][col] << row;
     }
   }
-  return bin;
 }
 
 // void img_to_binary(const int img[][COLUMN]) {
