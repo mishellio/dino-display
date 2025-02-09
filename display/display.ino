@@ -49,37 +49,7 @@ void setup() {
 }
 
 void loop() {
-  // board1.setPattern(0xFFFF, 255);
-  // board2.setPattern(0xFFFF, 255);
-  // board3.setPattern(0xFFFF, 255);
-  // delay(1000);
-  // board1.setPattern(0x0001, 255);
-  // board2.setPattern(0x0001, 255);
-  // board3.setPattern(0x0001, 255);
-  // delay(1000);
-
-  // board3.setPattern(0xFFFF, 255);
-  // delay(1000);
-  // board3.setPattern(0xFFF, 255);
-  // delay(1000);
-  // board3.setPattern(0xFF, 255);
-  // delay(1000);
-  // board3.setPattern(0xF, 255);
-
-  // binary_to_led(board1);
-  // board1.setPattern(0, 255);
-
   binary_to_led_all();
-  board1.setPattern(0, 255);
-  board2.setPattern(0, 255);
-  board3.setPattern(0, 255);
-  
-  // binary_to_led(board4);
-
-  // board4.setPattern(0, 255);
-  // board2.setPattern(0xFFFF, 255);
-  // board3.setPattern(0xFFFF, 255);
-  // binary_to_led_all();
   delay(101);
 }
 
@@ -101,6 +71,9 @@ void binary_to_led_all() {
     board3.setPattern(binary3[col], 255);
 
   }
+  board1.setPattern(0, 255);
+  board2.setPattern(0, 255);
+  board3.setPattern(0, 255);
 }
 
 void img_to_binary(const int img[][COLUMN]) {
