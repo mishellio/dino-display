@@ -38,9 +38,12 @@ void setup() {
   Serial.begin(9600);
 
   // img_to_binary(DINO);
-  img_to_binary(DINO_SCENE_1);
-  img_to_binary2(DINO_SCENE_2);
-  img_to_binary3(DINO_SCENE_3);
+  // img_to_binary(DINO_SCENE_1);
+  // img_to_binary2(DINO_SCENE_2);
+  // img_to_binary3(DINO_SCENE_3);
+  img_to_binary_return(DINO_SCENE_1, binary);
+  img_to_binary_return(DINO_SCENE_2, binary2);
+  img_to_binary_return(DINO_SCENE_3, binary3);
   
   board1.begin();
   board2.begin();
@@ -69,54 +72,28 @@ void binary_to_led_all() {
     board1.setPattern(binary[col], 255);
     board2.setPattern(binary2[col], 255);
     board3.setPattern(binary3[col], 255);
-
   }
   board1.setPattern(0, 255);
   board2.setPattern(0, 255);
   board3.setPattern(0, 255);
 }
 
-void img_to_binary(const int img[][COLUMN]) {
-  // unsigned int binary = 0;
-  // unsigned int binary_array[COLUMN];
+int* img_to_binary_return(const int img[][COLUMN], int bin[]) {
   for(int col = 0; col < COLUMN; col++) {
     for(int row = 0; row < ROW; row++) {
-      binary[col] |= img[row][col] << row;
+      bin[col] |= img[row][col] << row;
     }
-    // Serial.println(binary);
-    // binary_array[col] = binary;
-    // binary = 0;
   }
-  // return binary_array;
+  return bin;
 }
 
-void img_to_binary2(const int img[][COLUMN]) {
-  // unsigned int binary = 0;
-  // unsigned int binary_array[COLUMN];
-  for(int col = 0; col < COLUMN; col++) {
-    for(int row = 0; row < ROW; row++) {
-      binary2[col] |= img[row][col] << row;
-    }
-    // Serial.println(binary);
-    // binary_array[col] = binary;
-    // binary = 0;
-  }
-  // return binary_array;
-}
-
-void img_to_binary3(const int img[][COLUMN]) {
-  // unsigned int binary = 0;
-  // unsigned int binary_array[COLUMN];
-  for(int col = 0; col < COLUMN; col++) {
-    for(int row = 0; row < ROW; row++) {
-      binary3[col] |= img[row][col] << row;
-    }
-    // Serial.println(binary);
-    // binary_array[col] = binary;
-    // binary = 0;
-  }
-  // return binary_array;
-}
+// void img_to_binary(const int img[][COLUMN]) {
+//   for(int col = 0; col < COLUMN; col++) {
+//     for(int row = 0; row < ROW; row++) {
+//       binary[col] |= img[row][col] << row;
+//     }
+//   }
+// }
 
 // lights up all leds
 void sanity_check_leds() {
@@ -135,4 +112,3 @@ void sanity_check_array(int array[]) {
     Serial.println(array[i]);
   }
 }
-
