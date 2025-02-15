@@ -37,9 +37,6 @@ int binary2[COLUMN] = {0};
 int binary3[COLUMN] = {0};
 
 bool detected = false;
-// long prev_time = 0;
-// long curr_time = 0;
-// long avg_rtt = 0;
 long start_time = 0;
 long s = 0;
 
@@ -76,39 +73,43 @@ void setup() {
 
 void loop() {
   double period = get_half_period();
+    period -= 54500;//13 ms is profiled time dino takes to flash
+                // 54.5 ms is profiled time for dino frame with shadow registers
+  period = period/12;
   Serial.print("final: ");
   Serial.println(period);
-  period -= 54;//13 ms is profiled time dino takes to flash
-                // 54.5 ms is profiled time for dino frame with shadow registers
+
   for (int i = 0; i < 100; i++) {
       // long st = micros();
       binary_to_led_all();
       // long et = micros() - st;
       // Serial.print("image display time: ");
       // Serial.println(et);
-      delay(period);  
+      for (int i = 0; i < 12; i++) {
+        delayMicroseconds(period);  
+      }
   }
   // sanity_check_leds();
-  delay(101);
+  // delay(101);
 }
 
 // sample period for 50 rotations, return average
 long get_half_period() {
   long period = 0;
   int num_rotation = 0;
-  while (num_rotation < 50) {
+  while (num_rotation < 25) {
       if (sensor.readRangeContinuousMillimeters() > 2000) {
         detected = false;
       }
       else if (!detected) {
-        long end_time = millis()-start_time;
+        long end_time = micros()-start_time;
         Serial.println(end_time);
-        if (end_time < 170) {
+        if (end_time < 170000) {
           period += end_time;
           num_rotation += 1;
         }
         detected = true;
-        start_time = millis();
+        start_time = micros();
       }
       if (sensor.timeoutOccurred()) { Serial.print(" GET FREQUENCY TIMEOUT"); }
   }
