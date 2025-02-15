@@ -11,6 +11,7 @@ VL53L0X sensor;
 
 // #define RESET_PIN D7
 #define RESET_PIN 7
+#define IR_PIN 8
 
 TLC59116 board1(0b1100000, true);
 TLC59116 board2(0b1100001, true);
@@ -50,15 +51,15 @@ void setup() {
   digitalWrite(RESET_PIN, HIGH);
   Serial.begin(9600);
 
-  sensor.setTimeout(500);
-  if (!sensor.init())
-  {
-    Serial.println("Failed to detect and initialize sensor!");
-  }
+  // sensor.setTimeout(500);
+  // if (!sensor.init())
+  // {
+  //   Serial.println("Failed to detect and initialize sensor!");
+  // }
 
-  sensor.setSignalRateLimit(0.4);
-  sensor.setMeasurementTimingBudget(20000);
-  sensor.startContinuous();
+  // sensor.setSignalRateLimit(0.4);
+  // sensor.setMeasurementTimingBudget(20000);
+  // sensor.startContinuous();
 
   // img_to_binary(DINO, binary);
   img_to_binary(DINO_SCENE_1, binary);
@@ -72,23 +73,28 @@ void setup() {
 }
 
 void loop() {
-  double period = get_half_period();
-    period -= 54500;//13 ms is profiled time dino takes to flash
-                // 54.5 ms is profiled time for dino frame with shadow registers
-  period = period/12;
-  Serial.print("final: ");
-  Serial.println(period);
-
-  for (int i = 0; i < 100; i++) {
-      // long st = micros();
-      binary_to_led_all();
-      // long et = micros() - st;
-      // Serial.print("image display time: ");
-      // Serial.println(et);
-      for (int i = 0; i < 12; i++) {
-        delayMicroseconds(period);  
-      }
+  if (digitalRead(IR_PIN) == LOW) {
+    binary_to_led_all();
   }
+    
+  //delay(100);
+  // double period = get_half_period();
+  //   period -= 54500;//13 ms is profiled time dino takes to flash
+  //               // 54.5 ms is profiled time for dino frame with shadow registers
+  // period = period/12;
+  // Serial.print("final: ");
+  // Serial.println(period);
+
+  // for (int i = 0; i < 100; i++) {
+  //     // long st = micros();
+  //     binary_to_led_all();
+  //     // long et = micros() - st;
+  //     // Serial.print("image display time: ");
+  //     // Serial.println(et);
+  //     for (int i = 0; i < 12; i++) {
+  //       delayMicroseconds(period);  
+  //     }
+  // }
   // sanity_check_leds();
   // delay(101);
 }
