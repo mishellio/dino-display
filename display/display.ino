@@ -74,7 +74,7 @@ void setup() {
 
 void loop() {
   if (digitalRead(IR_PIN) == LOW) {
-    delay(50);
+    delay(50); // add delay to prevent double image on one side
     binary_to_led_all();
   }
     
