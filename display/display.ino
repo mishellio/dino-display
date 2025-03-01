@@ -6,6 +6,7 @@
 #include <TLC59116.h>
 #include <TLC59116Manager.h>
 #include "images.h"
+// #include "frames.hpp"
 
 #include <VL53L0X.h>
 VL53L0X sensor;
@@ -29,18 +30,20 @@ TLC59116 board3(0b1100010, true);
 TLC59116Manager manager;
 
 // dino frame constants
-const int COLUMN = 60;
-const int ROW = 48;
+const int COLUMN = DW_WIDTH;
+const int ROW = DW_HEIGHT;
+const int FRAMES_MAX = DW_FRAMES;
+int frame_count = 0;
 
 // singular dino constants
 // const int COLUMN = 8;
 // const int ROW = 8;
 
-uint16_t binary[COLUMN] = {0};
-uint16_t binary2[COLUMN] = {0};
-uint16_t binary3[COLUMN] = {0};
+// uint16_t binary[COLUMN] = {0};
+// uint16_t binary2[COLUMN] = {0};
+// uint16_t binary3[COLUMN] = {0};
 
-uint64_t binary_big[COLUMN] = {0};
+// uint64_t binary_big[COLUMN] = {0};
 
 bool detected = false;
 long start_time = 0;
@@ -70,7 +73,7 @@ void setup() {
   // img_to_binary_ranged(DINO_SCENE, binary, 0, 16);
   // img_to_binary_ranged(DINO_SCENE, binary2, 16, 32);
   // img_to_binary_ranged(DINO_SCENE, binary3, 32, 48);
-  img_to_binary(DINO_SCENE, binary_big);
+
 
   if (!manager.add(&board1))
     Serial.println("Failed to add board1");
@@ -89,7 +92,11 @@ void setup() {
 void loop() {
   if (digitalRead(IR_PIN) == LOW) {
     delay(50); // add delay to prevent double image on one side
-    binary_to_led();
+    binary_to_led(frame_count);
+    frame_count++;
+    if (frame_count == FRAMES_MAX) {
+      frame_count = 0;
+    }
   }
 }
 
@@ -116,40 +123,50 @@ long get_half_period() {
   return period/num_rotation;
 }
 
-void binary_to_led() {
+void binary_to_led(int frame) {
   for(int col = 0; col < COLUMN; col++) {
-    manager.setPattern(binary_big[col], 255);
+    uint64_t binary = col_to_bin(DINO_WALK[frame], col);
+    manager.setPattern(binary, 255);
   }
   manager.setPattern(0, 255);
 }
 
-void binary_to_led_all() {
-  for(int col = 0; col < COLUMN; col++) {
-    board1.setPattern(binary[col], 255);
-    board2.setPattern(binary2[col], 255);
-    board3.setPattern(binary3[col], 255);
-  }
-  board1.setPattern(0, 255);
-  board2.setPattern(0, 255);
-  board3.setPattern(0, 255);
+// void binary_to_led_all() {
+//   for(int col = 0; col < COLUMN; col++) {
+//     board1.setPattern(binary[col], 255);
+//     board2.setPattern(binary2[col], 255);
+//     board3.setPattern(binary3[col], 255);
+//   }
+//   board1.setPattern(0, 255);
+//   board2.setPattern(0, 255);
+//   board3.setPattern(0, 255);
+// }
+
+uint64_t col_to_bin(const int img[][COLUMN], int col_num) {
+  uint64_t binary = 0;
+  for(int row = 0; row < ROW; row++) {
+      uint64_t uint64 = img[row][col_num];
+      binary |= uint64 << row;
+    }
+  return binary;
 }
 
-void img_to_binary(const int img[][COLUMN], uint64_t bin[]) {
-  for(int col = 0; col < COLUMN; col++) {
-    for(int row = 0; row < ROW; row++) {
-      uint64_t uint64 = img[row][col];
-      bin[col] |= uint64 << row;
-    }
-  }
-}
+// void img_to_binary(const int img[][COLUMN], uint64_t bin[]) {
+//   for(int col = 0; col < COLUMN; col++) {
+//     for(int row = 0; row < ROW; row++) {
+//       uint64_t uint64 = img[row][col];
+//       bin[col] |= uint64 << row;
+//     }
+//   }
+// }
 
-void img_to_binary_ranged(const int img[][COLUMN], uint16_t bin[], int row_start, int row_end) {
-  for(int col = 0; col < COLUMN; col++) {
-    for(int row = row_start; row < row_end; row++) {
-      bin[col] |= img[row][col] << row%16;
-    }
-  }
-}
+// void img_to_binary_ranged(const int img[][COLUMN], uint16_t bin[], int row_start, int row_end) {
+//   for(int col = 0; col < COLUMN; col++) {
+//     for(int row = row_start; row < row_end; row++) {
+//       bin[col] |= img[row][col] << row%16;
+//     }
+//   }
+// }
 
 // lights up all leds
 void sanity_check_leds() {
