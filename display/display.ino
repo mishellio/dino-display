@@ -62,9 +62,9 @@ void setup() {
   // sensor.startContinuous();
 
   // img_to_binary(DINO, binary);
-  img_to_binary(DINO_SCENE_1, binary);
-  img_to_binary(DINO_SCENE_2, binary2);
-  img_to_binary(DINO_SCENE_3, binary3);
+  img_to_binary(DINO_SCENE, binary, 0, 16);
+  img_to_binary(DINO_SCENE, binary2, 16, 32);
+  img_to_binary(DINO_SCENE, binary3, 32, 48);
   
   board1.begin();
   board2.begin();
@@ -74,6 +74,7 @@ void setup() {
 
 void loop() {
   if (digitalRead(IR_PIN) == LOW) {
+    delay(50);
     binary_to_led_all();
   }
     
@@ -144,10 +145,10 @@ void binary_to_led_all() {
   board3.setPattern(0, 255);
 }
 
-void img_to_binary(const int img[][COLUMN], int bin[]) {
+void img_to_binary(const int img[][COLUMN], int bin[], int row_start, int row_end) {
   for(int col = 0; col < COLUMN; col++) {
-    for(int row = 0; row < ROW; row++) {
-      bin[col] |= img[row][col] << row;
+    for(int row = row_start; row < row_end; row++) {
+      bin[col] |= img[row][col] << row%16;
     }
   }
 }
