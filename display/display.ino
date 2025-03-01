@@ -4,6 +4,7 @@
  */
 
 #include <TLC59116.h>
+#include <TLC59116Manager.h>
 #include "images.h"
 
 #include <VL53L0X.h>
@@ -25,17 +26,21 @@ TLC59116 board3(0b1100010, true);
 // TLC59116 board2(0b1100100, true);
 // TLC59116 board3(0b1100101, true);
 
+TLC59116Manager manager;
+
 // dino frame constants
 const int COLUMN = 60;
-const int ROW = 16;
+const int ROW = 48;
 
 // singular dino constants
 // const int COLUMN = 8;
 // const int ROW = 8;
 
-int binary[COLUMN] = {0};
-int binary2[COLUMN] = {0};
-int binary3[COLUMN] = {0};
+uint16_t binary[COLUMN] = {0};
+uint16_t binary2[COLUMN] = {0};
+uint16_t binary3[COLUMN] = {0};
+
+uint64_t binary_big[COLUMN] = {0};
 
 bool detected = false;
 long start_time = 0;
@@ -62,42 +67,30 @@ void setup() {
   // sensor.startContinuous();
 
   // img_to_binary(DINO, binary);
-  img_to_binary(DINO_SCENE, binary, 0, 16);
-  img_to_binary(DINO_SCENE, binary2, 16, 32);
-  img_to_binary(DINO_SCENE, binary3, 32, 48);
-  
-  board1.begin();
-  board2.begin();
-  board3.begin();
+  // img_to_binary_ranged(DINO_SCENE, binary, 0, 16);
+  // img_to_binary_ranged(DINO_SCENE, binary2, 16, 32);
+  // img_to_binary_ranged(DINO_SCENE, binary3, 32, 48);
+  img_to_binary(DINO_SCENE, binary_big);
+
+  if (!manager.add(&board1))
+    Serial.println("Failed to add board1");
+  if (!manager.add(&board2))
+    Serial.println("Failed to add board2");
+  if (!manager.add(&board3))
+    Serial.println("Failed to add board3");
+
+  manager.begin();
+  // board1.begin();
+  // board2.begin();
+  // board3.begin();
   Serial.println("setup() done");
 }
 
 void loop() {
   if (digitalRead(IR_PIN) == LOW) {
     delay(50); // add delay to prevent double image on one side
-    binary_to_led_all();
+    binary_to_led();
   }
-    
-  //delay(100);
-  // double period = get_half_period();
-  //   period -= 54500;//13 ms is profiled time dino takes to flash
-  //               // 54.5 ms is profiled time for dino frame with shadow registers
-  // period = period/12;
-  // Serial.print("final: ");
-  // Serial.println(period);
-
-  // for (int i = 0; i < 100; i++) {
-  //     // long st = micros();
-  //     binary_to_led_all();
-  //     // long et = micros() - st;
-  //     // Serial.print("image display time: ");
-  //     // Serial.println(et);
-  //     for (int i = 0; i < 12; i++) {
-  //       delayMicroseconds(period);  
-  //     }
-  // }
-  // sanity_check_leds();
-  // delay(101);
 }
 
 // sample period for 50 rotations, return average
@@ -123,15 +116,11 @@ long get_half_period() {
   return period/num_rotation;
 }
 
-void binary_to_led(TLC59116 board) {
-  // long start_time = micros();
+void binary_to_led() {
   for(int col = 0; col < COLUMN; col++) {
-    board.setPattern(binary[col], 255);
-    // delay(1000);
+    manager.setPattern(binary_big[col], 255);
   }
-  // long end_time = micros();
-  // long total_time = end_time - start_time;
-  // Serial.println(total_time);
+  manager.setPattern(0, 255);
 }
 
 void binary_to_led_all() {
@@ -145,7 +134,16 @@ void binary_to_led_all() {
   board3.setPattern(0, 255);
 }
 
-void img_to_binary(const int img[][COLUMN], int bin[], int row_start, int row_end) {
+void img_to_binary(const int img[][COLUMN], uint64_t bin[]) {
+  for(int col = 0; col < COLUMN; col++) {
+    for(int row = 0; row < ROW; row++) {
+      uint64_t uint64 = img[row][col];
+      bin[col] |= uint64 << row;
+    }
+  }
+}
+
+void img_to_binary_ranged(const int img[][COLUMN], uint16_t bin[], int row_start, int row_end) {
   for(int col = 0; col < COLUMN; col++) {
     for(int row = row_start; row < row_end; row++) {
       bin[col] |= img[row][col] << row%16;
