@@ -6,14 +6,14 @@
 #include <TLC59116.h>
 #include <TLC59116Manager.h>
 #include "images.h"
-// #include "frames.hpp"
+#include "frames.hpp"
 
 #include <VL53L0X.h>
 VL53L0X sensor;
 
 // #define RESET_PIN D7
-#define RESET_PIN 7
-#define IR_PIN 8
+#define RESET_PIN D7
+#define IR_PIN D8
 
 TLC59116 board1(0b1100000, true);
 TLC59116 board2(0b1100001, true);
@@ -30,9 +30,9 @@ TLC59116 board3(0b1100010, true);
 TLC59116Manager manager;
 
 // dino frame constants
-const int COLUMN = DW_WIDTH;
-const int ROW = DW_HEIGHT;
-const int FRAMES_MAX = DW_FRAMES;
+const int COLUMN = SCREEN_WIDTH;
+const int ROW = SCREEN_HEIGHT;
+const int FRAMES_MAX = FRAME_NUM;
 int frame_count = 0;
 
 // singular dino constants
@@ -91,12 +91,14 @@ void setup() {
 
 void loop() {
   if (digitalRead(IR_PIN) == LOW) {
-    delay(50); // add delay to prevent double image on one side
+
     binary_to_led(frame_count);
     frame_count++;
     if (frame_count == FRAMES_MAX) {
       frame_count = 0;
     }
+    // delay(270); // add delay (100) to prevent double image on one side
+    // add delay (200) so it only displays on 1 side
   }
 }
 
@@ -125,7 +127,7 @@ long get_half_period() {
 
 void binary_to_led(int frame) {
   for(int col = 0; col < COLUMN; col++) {
-    uint64_t binary = col_to_bin(DINO_WALK[frame], col);
+    uint64_t binary = col_to_bin(FRAMES[frame], col);
     manager.setPattern(binary, 255);
   }
   manager.setPattern(0, 255);
