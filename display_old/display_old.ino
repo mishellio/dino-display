@@ -41,9 +41,11 @@
 
 #include <Wire.h>
 #include <avr/pgmspace.h>
-//#include <pgmspace.h>
 
-#include "TLC59116.h"
+#include "Adafruit_VL53L0X.h"
+Adafruit_VL53L0X lox = Adafruit_VL53L0X();
+
+#include "TLC59116_old.h"
 TLC59116Manager tlcmanager(Wire, 100000); // see the I2C_Speed.xls spread sheet for workable speeds
 
 #include "BlinkTracking.h"
@@ -62,13 +64,26 @@ const int DINO[ROW][COLUMN] = {
   {0, 1, 0, 1, 0, 0, 0, 0}
 };
 
+  bool detected = false;
+  long prev_time = 0;
+  long curr_time = 0;
+  long avg_rtt = 0;
+
 void setup() {
     Serial.begin(9600);
+    while (! Serial) {
+      delay(1);
+    }
     pinMode(7,OUTPUT);
     pinMode(6,OUTPUT);
-    digitalWrite(6,HIGH);
+    digitalWrite(7,HIGH);
     pinMode(13,OUTPUT);
     Serial.println("setup().arduino done");
+
+    if (!lox.begin()) {
+      Serial.println(F("Failed to boot VL53L0X"));
+      while(1);
+    }
 
     tlcmanager.init();
     // tlcmanager.broadcast().on_pattern(0xF << 8); // 8..11 on
@@ -81,16 +96,83 @@ void setup() {
 }
 
 void loop() {
-  static TLC59116 &t = tlcmanager[0];
-
-  // do_blinks(t);
-  // do_triangles(t);
   array_to_leds(DINO);
+
+  //test_sensor();
+  // update_led();
+
   }
+
+void update_led() {
+  VL53L0X_RangingMeasurementData_t measure;
+  
+  lox.rangingTest(&measure, false); // pass in 'true' to get debug data printout! this is where measure gets set
+  // Serial.println(measure.RangeMilliMeter);
+  // if (arm_detected(measure) && !detected) {
+  //   prev_time = curr_time; // set previous time with previous current
+  //   curr_time = micros(); // new current
+  //   long total_time = curr_time - prev_time;
+  //   Serial.println(total_time);
+  //   // Serial.println(measure.RangeMilliMeter);
+
+  //   detected = true;
+  //   array_to_leds_delay(DINO, total_time);
+  // }
+  // else if (!arm_detected(measure) && detected) {
+  //   detected = false;
+  // }
+  if (measure.RangeMilliMeter > 2000) {
+    detected = false;
+  } else if (!detected) {
+    detected = true;
+    array_to_leds_delay(DINO, 1);
+    // prev_time = curr_time; // set previous time with previous current
+    // curr_time = micros(); // new current
+    // long total_time = curr_time - prev_time;
+    // // if (avg_rtt == 0) {
+    //   // avg_rtt = total_time;
+    // // } else {
+    //   // avg_rtt = 0.99*avg_rtt + 0.01*total_time;
+    // // }
+    // avg_rtt = 100000;
+    // array_to_leds_delay(DINO, avg_rtt);
+    // Serial.print("measure.RangeMilliMeter: ");
+    // Serial.print(measure.RangeMilliMeter);
+    // Serial.print(", ");
+    // Serial.print("total_time: ");
+    // Serial.println(total_time);
+  }
+}
+
+void test_sensor() {
+  VL53L0X_RangingMeasurementData_t measure;
+  lox.rangingTest(&measure, false); // pass in 'true' to get debug data printout! this is where measure gets set
+  if (arm_detected(measure)) {
+    Serial.println("you won");
+  }
+  Serial.println("nvm");
+}
+
+bool arm_detected(VL53L0X_RangingMeasurementData_t measure) {
+  return (measure.RangeMilliMeter >= 110 && measure.RangeMilliMeter <= 140); // 110 to 130 based on testing --> was a bit inaccurate so maybe 90 - 140?
+  // or maybe i just do either number or out of range, depends on if there's anything else that can interfere
+}
+
+void array_to_leds_delay(int array[][COLUMN], long total_time) {
+  long delay =  ((1/4)/ROW)*total_time; // (1/4th of display/image width)*rotation time = delay for 1 col of led
+  unsigned int binary = 0;
+  for(int i = 0; i < COLUMN; i++) {
+    binary = col_to_bin(array, i);
+    tlcmanager.broadcast().off_pattern(0xFFFF);
+    tlcmanager.broadcast().on_pattern(binary);
+  }
+  tlcmanager.broadcast().off_pattern(0xFFFF);
+  delayMicroseconds(delay);
+}
 
 void array_to_leds(int array[][COLUMN]) {
   unsigned int binary = 0;
-  long start_time = micros();
+  // long start_time = micros();
   for(int i = 0; i < COLUMN; i++) {
     binary = col_to_bin(array, i);
     tlcmanager.broadcast().off_pattern(0xFFFF);
@@ -99,8 +181,8 @@ void array_to_leds(int array[][COLUMN]) {
   }
   tlcmanager.broadcast().off_pattern(0xFFFF);
   delay(5);
-  long total_time = micros() - start_time;
-  Serial.println(total_time);
+  // long total_time = micros() - start_time;
+  // Serial.println(total_time);
 }
 
 unsigned int col_to_bin(int array[][COLUMN], int col_num) {
@@ -111,6 +193,8 @@ unsigned int col_to_bin(int array[][COLUMN], int col_num) {
   return binary;
 }
 
+
+// OLD CODE FROM EXAMPLE ---------------------------------------------------------------------------------------------------------
 void do_blinks(TLC59116 &t) {
   static unsigned long blink_cycle_start = 0;
   const static int On_Time = 3; // elapsed from beginning of cycle. empirical to keep led on very short
